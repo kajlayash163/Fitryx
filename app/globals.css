@@ -1,0 +1,302 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* Fitryx — Premium Dark Theme */
+:root {
+  --background: oklch(0.10 0.012 250);
+  --foreground: oklch(0.95 0.005 240);
+  --card: oklch(0.13 0.015 250);
+  --card-foreground: oklch(0.95 0.005 240);
+  --popover: oklch(0.13 0.015 250);
+  --popover-foreground: oklch(0.95 0.005 240);
+  --primary: oklch(0.65 0.22 195);
+  --primary-foreground: oklch(0.10 0.012 250);
+  --secondary: oklch(0.18 0.018 250);
+  --secondary-foreground: oklch(0.80 0.010 240);
+  --muted: oklch(0.17 0.016 250);
+  --muted-foreground: oklch(0.55 0.015 240);
+  --accent: oklch(0.22 0.025 255);
+  --accent-foreground: oklch(0.90 0.010 240);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.95 0.005 25);
+  --border: oklch(0.22 0.018 250);
+  --input: oklch(0.18 0.018 250);
+  --ring: oklch(0.65 0.22 195);
+  --radius: 0.75rem;
+
+  /* Chart colors */
+  --chart-1: oklch(0.65 0.22 195);
+  --chart-2: oklch(0.45 0.18 280);
+  --chart-3: oklch(0.60 0.20 150);
+  --chart-4: oklch(0.55 0.19 30);
+  --chart-5: oklch(0.50 0.17 50);
+
+  /* Surface elevation */
+  --surface-1: oklch(0.13 0.015 250);
+  --surface-2: oklch(0.16 0.016 250);
+  --surface-3: oklch(0.19 0.018 250);
+
+  /* Glow effects */
+  --glow-primary: oklch(0.65 0.22 195 / 0.3);
+  --glow-primary-strong: oklch(0.65 0.22 195 / 0.6);
+  --border-subtle: oklch(0.18 0.014 250 / 0.4);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+    outline-color: var(--ring);
+  }
+  html[data-scroll-behavior="smooth"] {
+    scroll-behavior: smooth;
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Keyframe animations */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideRight {
+  from {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes tabSwitch {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cardScale {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 8px oklch(0.65 0.22 195 / 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 16px oklch(0.65 0.22 195 / 0.6));
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scroll-reveal animation utilities */
+@layer utilities {
+  .animate-fade-up {
+    animation: fadeUp 0.6s ease-out forwards;
+  }
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+  .animate-scale-in {
+    animation: scaleIn 0.5s ease-out forwards;
+  }
+  .animate-slide-left {
+    animation: slideLeft 0.6s ease-out forwards;
+  }
+  .animate-slide-right {
+    animation: slideRight 0.6s ease-out forwards;
+  }
+  .animate-tab-switch {
+    animation: tabSwitch 0.3s ease-out;
+  }
+  .animate-card-scale {
+    animation: cardScale 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+  }
+  .animate-glow-pulse {
+    animation: glowPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  .animate-slide-in-down {
+    animation: slideInDown 0.3s ease-out;
+  }
+  .animate-slide-in-up {
+    animation: slideInUp 0.3s ease-out;
+  }
+
+  .reveal-hidden {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  .reveal-visible {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+  .reveal-left {
+    opacity: 0;
+    transform: translateX(-32px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+  .reveal-right {
+    opacity: 0;
+    transform: translateX(32px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+  .reveal-left.reveal-visible,
+  .reveal-right.reveal-visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 24px var(--glow-primary);
+  }
+  .glow-primary-hover:hover {
+    box-shadow: 0 0 32px var(--glow-primary-strong);
+  }
+  .card-surface {
+    background: var(--surface-1);
+    border: 1px solid var(--border-subtle);
+  }
+  .surface-2 {
+    background: var(--surface-2);
+  }
+  .surface-3 {
+    background: var(--surface-3);
+  }
+
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .hover-lift {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-0.25rem);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  }
+}

@@ -1,0 +1,27 @@
+# v0 runtime files
+__v0_runtime_loader.js
+__v0_devtools.tsx
+__v0_jsx-dev-runtime.ts
+
+# Common ignores
+node_modules/
+.next/
+.DS_Store
+
+# Environment variables
+.env
+.env.*
+environment.txt
+
+# Vercel / Next.js builds
+out/
+build/
+.vercel
+*.pem
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
