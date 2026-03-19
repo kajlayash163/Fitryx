@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import Navbar from '@/components/navbar'
 import Footer from '@/components/footer'
 import ComparePage from '@/components/compare/compare-page'
@@ -11,7 +12,9 @@ export default function Page() {
   return (
     <>
       <Navbar />
-      <ComparePage />
+      <Suspense fallback={<div className="min-h-screen pt-24 flex items-center justify-center"><div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" /></div>}>
+        <ComparePage />
+      </Suspense>
       <Footer />
     </>
   )
