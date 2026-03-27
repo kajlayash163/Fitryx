@@ -1,16 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Dumbbell, Users, ShieldCheck, Clock, TrendingUp } from 'lucide-react'
+import { Dumbbell, Users, Star, ShieldCheck, TrendingUp, Medal } from 'lucide-react'
 import { useCountUp, useReveal } from '@/hooks/use-reveal'
 
 type Stats = {
-  totalGyms: number
-  verifiedGyms: number
-  pendingGyms: number
-  totalUsers: number
-  gymGrowth: { month: string; count: number }[]
-  userGrowth: { month: string; count: number }[]
+  users: { total: number; verified: number }
+  gyms: { total: number }
+  reviews: { total: number }
+  topGyms: { id: number; name: string; rating: number; review_count: number }[]
 }
 
 function StatCard({
@@ -43,9 +41,10 @@ export default function AdminOverviewPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/analytics')
+    fetch('/api/admin/stats')
       .then(r => r.json())
       .then(d => setStats(d))
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
@@ -59,11 +58,18 @@ export default function AdminOverviewPage() {
     )
   }
 
-  if (!stats) return null
+  if (!stats) {
+    return (
+      <div className="card-surface rounded-2xl p-8 text-center">
+        <p className="text-muted-foreground text-sm">Failed to load stats. Are you an admin?</p>
+      </div>
+    )
+  }
+
+  const verifiedPct = stats.users.total > 0 ? Math.round((stats.users.verified / stats.users.total) * 100) : 0
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Page title */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">Dashboard Overview</h1>
         <p className="text-muted-foreground text-sm mt-1">Monitor your platform at a glance</p>
@@ -71,58 +77,65 @@ export default function AdminOverviewPage() {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatCard icon={Dumbbell} label="Total Gyms" value={stats.totalGyms} color="bg-primary/10 text-primary" delay={0} />
-        <StatCard icon={Users} label="Total Users" value={stats.totalUsers} color="bg-blue-500/10 text-blue-400" delay={80} />
-        <StatCard icon={ShieldCheck} label="Verified Gyms" value={stats.verifiedGyms} color="bg-emerald-500/10 text-emerald-400" delay={160} />
-        <StatCard icon={Clock} label="Pending Approval" value={stats.pendingGyms} color="bg-amber-500/10 text-amber-400" delay={240} />
+        <StatCard icon={Dumbbell} label="Total Gyms" value={stats.gyms.total} color="bg-primary/10 text-primary" delay={0} />
+        <StatCard icon={Users} label="Total Users" value={stats.users.total} color="bg-blue-500/10 text-blue-400" delay={80} />
+        <StatCard icon={Star} label="Total Reviews" value={stats.reviews.total} color="bg-amber-500/10 text-amber-400" delay={160} />
+        <StatCard icon={ShieldCheck} label="Verified Users" value={stats.users.verified} color="bg-emerald-500/10 text-emerald-400" delay={240} />
       </div>
 
-      {/* Recent activity placeholder */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Rated Gyms */}
         <div className="card-surface rounded-2xl p-6">
-          <h3 className="text-sm font-semibold text-foreground mb-5">Gym Registrations (6mo)</h3>
-          {stats.gymGrowth.length === 0 ? (
-            <div className="flex items-center justify-center h-32 text-sm text-muted-foreground">
-              No data yet — add some gyms to see growth
-            </div>
+          <h3 className="text-sm font-semibold text-foreground mb-5 flex items-center gap-2">
+            <Medal className="w-4 h-4 text-primary" /> Top Rated Gyms
+          </h3>
+          {stats.topGyms.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">No gyms yet</p>
           ) : (
-            <div className="flex items-end gap-3 h-32">
-              {stats.gymGrowth.map((d, i) => {
-                const max = Math.max(...stats.gymGrowth.map(x => Number(x.count)), 1)
-                const pct = (Number(d.count) / max) * 100
-                return (
-                  <div key={i} className="flex flex-col items-center gap-1.5 flex-1">
-                    <div className="w-full rounded-t-lg bg-primary/20 hover:bg-primary/30 transition-colors relative overflow-hidden" style={{ height: `${pct}%`, minHeight: 4 }}>
-                      <div className="absolute inset-0 bg-primary/40 animate-pulse" style={{ animationDelay: `${i * 100}ms` }} />
-                    </div>
-                    <span className="text-xs text-muted-foreground">{d.month}</span>
+            <div className="flex flex-col gap-3">
+              {stats.topGyms.map((gym, i) => (
+                <div key={gym.id} className="flex items-center gap-4 p-3 rounded-xl hover:bg-accent/30 transition-colors">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${
+                    i === 0 ? 'bg-amber-500/20 text-amber-400' :
+                    i === 1 ? 'bg-gray-400/20 text-gray-300' :
+                    'bg-orange-500/20 text-orange-400'
+                  }`}>
+                    #{i + 1}
                   </div>
-                )
-              })}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{gym.name}</p>
+                    <p className="text-xs text-muted-foreground">{gym.review_count} reviews</p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Star className="w-3.5 h-3.5 fill-primary text-primary" />
+                    <span className="text-sm font-semibold text-foreground">{Number(gym.rating).toFixed(1)}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
 
+        {/* Verification Status */}
         <div className="card-surface rounded-2xl p-6">
-          <h3 className="text-sm font-semibold text-foreground mb-5">User Registrations (6mo)</h3>
-          {stats.userGrowth.length === 0 ? (
-            <div className="flex items-center justify-center h-32 text-sm text-muted-foreground">
-              No data yet — registrations will appear here
+          <h3 className="text-sm font-semibold text-foreground mb-5 flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" /> User Verification
+          </h3>
+          <div className="flex flex-col items-center justify-center py-4">
+            <div className="relative w-32 h-32 mb-4">
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="15.91" fill="none" stroke="currentColor" strokeWidth="3" className="text-muted/20" />
+                <circle cx="18" cy="18" r="15.91" fill="none" stroke="currentColor" strokeWidth="3" className="text-emerald-400"
+                  strokeDasharray={`${verifiedPct} ${100 - verifiedPct}`} strokeLinecap="round" />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-2xl font-bold text-foreground">{verifiedPct}%</span>
+              </div>
             </div>
-          ) : (
-            <div className="flex items-end gap-3 h-32">
-              {stats.userGrowth.map((d, i) => {
-                const max = Math.max(...stats.userGrowth.map(x => Number(x.count)), 1)
-                const pct = (Number(d.count) / max) * 100
-                return (
-                  <div key={i} className="flex flex-col items-center gap-1.5 flex-1">
-                    <div className="w-full rounded-t-lg bg-blue-500/20 hover:bg-blue-500/30 transition-colors" style={{ height: `${pct}%`, minHeight: 4 }} />
-                    <span className="text-xs text-muted-foreground">{d.month}</span>
-                  </div>
-                )
-              })}
-            </div>
-          )}
+            <p className="text-sm text-muted-foreground">
+              <span className="text-foreground font-medium">{stats.users.verified}</span> of {stats.users.total} users verified
+            </p>
+          </div>
         </div>
       </div>
 
@@ -131,9 +144,8 @@ export default function AdminOverviewPage() {
         <h3 className="text-sm font-semibold text-foreground mb-4">Quick Actions</h3>
         <div className="flex flex-wrap gap-3">
           {[
-            { label: 'Add New Gym', href: '/admin/gyms' },
-            { label: 'Manage Users', href: '/admin/users' },
-            { label: 'View Analytics', href: '/admin/analytics' },
+            { label: 'Manage Gyms', href: '/admin/gyms' },
+            { label: 'View All Users', href: '/admin/users' },
           ].map(({ label, href }) => (
             <a
               key={href}

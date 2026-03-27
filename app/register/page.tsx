@@ -36,9 +36,14 @@ export default function RegisterPage() {
         toast.error(data.error ?? 'Registration failed')
         return
       }
-      toast.success('Account created! Welcome to Fitryx.')
-      router.push('/gyms')
-      router.refresh()
+      if (data.needsVerification) {
+        toast.success('Verification code sent to your email!')
+        router.push(`/verify-email?email=${encodeURIComponent(data.email)}`)
+      } else {
+        toast.success('Account created! Welcome to Fitryx.')
+        router.push('/gyms')
+        router.refresh()
+      }
     } finally {
       setLoading(false)
     }

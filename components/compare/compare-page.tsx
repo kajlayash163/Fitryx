@@ -226,9 +226,9 @@ export default function ComparePage() {
       <div className="max-w-7xl mx-auto px-6 py-10">
         {/* Header */}
         <div className="mb-10">
-          <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5 mb-3">Compare</Badge>
-          <h1 className="text-4xl font-bold text-foreground">Gym Comparison</h1>
-          <p className="text-muted-foreground mt-2">Compare up to 3 gyms side-by-side to find your perfect match</p>
+          <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5 mb-3 animate-fade-up" style={{ animationDelay: '0.1s', animationFillMode: 'both' }}>Compare</Badge>
+          <h1 className="text-4xl font-bold text-foreground animate-fade-up" style={{ animationDelay: '0.2s', animationFillMode: 'both' }}>Gym Comparison</h1>
+          <p className="text-muted-foreground mt-2 animate-fade-up" style={{ animationDelay: '0.3s', animationFillMode: 'both' }}>Compare up to 3 gyms side-by-side to find your perfect match</p>
         </div>
 
         {selected.length === 0 ? (

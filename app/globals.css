@@ -299,4 +299,138 @@
     transform: translateY(-0.25rem);
     box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
   }
+
+  /* ──────── Apple-style utilities ──────── */
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ── Apple-style keyframe animations ── */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes floatUp {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes maskReveal {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes blurIn {
+  from { opacity: 0; filter: blur(12px); transform: translateY(20px); }
+  to { opacity: 1; filter: blur(0); transform: translateY(0); }
+}
+
+@keyframes scaleReveal {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ── Apple animation utility classes ── */
+.apple-blur-in {
+  animation: blurIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.apple-scale-reveal {
+  animation: scaleReveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); filter: blur(4px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.apple-shimmer-text {
+  background: linear-gradient(
+    110deg,
+    #e8eaed 0%,
+    #e8eaed 35%,
+    #5eead4 50%,
+    #e8eaed 65%,
+    #e8eaed 100%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 3s linear infinite;
+}
+
+.apple-float {
+  animation: floatUp 6s ease-in-out infinite;
+}
+
+.apple-gradient-bg {
+  background: linear-gradient(-45deg, oklch(0.12 0.02 250), oklch(0.08 0.01 195), oklch(0.10 0.015 280), oklch(0.11 0.018 210));
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+.apple-mask-reveal {
+  animation: maskReveal 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Staggered delays for cards */
+.delay-0 { animation-delay: 0ms; }
+.delay-1 { animation-delay: 80ms; }
+.delay-2 { animation-delay: 160ms; }
+.delay-3 { animation-delay: 240ms; }
+.delay-4 { animation-delay: 320ms; }
+.delay-5 { animation-delay: 400ms; }
+.delay-6 { animation-delay: 480ms; }
+.delay-7 { animation-delay: 560ms; }
+.delay-8 { animation-delay: 640ms; }
+
+/* Glassmorphism card */
+.glass-card {
+  background: oklch(0.13 0.015 250 / 0.6);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid oklch(0.25 0.02 250 / 0.3);
+}
+
+/* Magnetic hover for cards */
+.magnetic-hover {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.magnetic-hover:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 20px 60px oklch(0 0 0 / 0.4), 0 0 40px oklch(0.65 0.22 195 / 0.08);
+}
+
+/* Apple-style scroll reveal */
+.sr-hidden {
+  opacity: 0;
+  transform: translateY(40px) scale(0.97);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sr-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }

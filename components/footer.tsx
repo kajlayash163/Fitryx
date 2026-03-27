@@ -25,24 +25,30 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Links */}
+        {/* Product links */}
         <div className="flex flex-col gap-3">
           <p className="text-xs font-semibold text-foreground uppercase tracking-widest">Product</p>
-          {['Gyms', 'Compare', 'Pricing', 'Reviews'].map(l => (
-            <a key={l} href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{l}</a>
-          ))}
+          <Link href="/gyms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Gyms</Link>
+          <Link href="/compare" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Compare</Link>
+          <Link href="/tools" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Fitness Tools</Link>
+          <Link href="/favorites" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Favorites</Link>
         </div>
+
+        {/* Company links */}
         <div className="flex flex-col gap-3">
           <p className="text-xs font-semibold text-foreground uppercase tracking-widest">Company</p>
-          {['About', 'Blog', 'Careers', 'Press'].map(l => (
-            <a key={l} href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{l}</a>
-          ))}
+          <span className="text-sm text-muted-foreground/50 cursor-default">About — Coming Soon</span>
+          <span className="text-sm text-muted-foreground/50 cursor-default">Blog — Coming Soon</span>
+          <span className="text-sm text-muted-foreground/50 cursor-default">Careers — Coming Soon</span>
         </div>
+
+        {/* Legal links */}
         <div className="flex flex-col gap-3">
-          <p className="text-xs font-semibold text-foreground uppercase tracking-widest">Legal</p>
-          {['Privacy', 'Terms', 'Cookies', 'Contact'].map(l => (
-            <a key={l} href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{l}</a>
-          ))}
+          <p className="text-xs font-semibold text-foreground uppercase tracking-widest">Account</p>
+          <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Sign In</Link>
+          <Link href="/register" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Create Account</Link>
+          <span className="text-sm text-muted-foreground/50 cursor-default">Privacy — Coming Soon</span>
+          <span className="text-sm text-muted-foreground/50 cursor-default">Terms — Coming Soon</span>
         </div>
       </div>
       <div className="border-t border-border/40 px-6 py-5 max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">

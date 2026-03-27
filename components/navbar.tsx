@@ -31,6 +31,8 @@ export default function Navbar() {
   const navLinks = [
     { label: 'Gyms', href: '/gyms' },
     { label: 'Compare', href: '/compare' },
+    { label: 'Tools', href: '/tools' },
+    { label: 'Favorites', href: '/favorites' },
   ]
 
   return (
@@ -82,10 +84,12 @@ export default function Navbar() {
                 </Link>
               )}
               <div className="flex items-center gap-2.5 pl-3 ml-1 border-l border-border/40">
-                <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-semibold text-sm ring-1 ring-primary/30 shadow-sm">
-                  {user.name.charAt(0).toUpperCase()}
-                </div>
-                <span className="text-sm font-medium text-foreground">{user.name}</span>
+                <Link href="/profile" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-semibold text-sm ring-1 ring-primary/30 shadow-sm">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-sm font-medium text-foreground">{user.name}</span>
+                </Link>
                 <Button 
                   variant="ghost" 
                   size="icon"

@@ -2,9 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import sql from '@/lib/db'
 import { comparePassword, createSession } from '@/lib/auth'
 import { cookies } from 'next/headers'
+import { rateLimit } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
+    const { allowed } = rateLimit(`login:${ip}`, 10, 60000)
+    if (!allowed) {
+      return NextResponse.json({ error: 'Too many login attempts. Please try again in a minute.' }, { status: 429 })
+    }
+
     const { email, password } = await req.json()
     if (!email || !password) {
       return NextResponse.json({ error: 'Email and password required' }, { status: 400 })

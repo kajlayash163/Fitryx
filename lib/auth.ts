@@ -27,7 +27,7 @@ export async function getSession() {
   if (!sessionId) return null
 
   const rows = await sql`
-    SELECT u.id, u.name, u.email, u.role, u.created_at
+    SELECT u.id, u.name, u.email, u.role, u.created_at, u.is_verified
     FROM sessions s
     JOIN users u ON s.user_id = u.id
     WHERE s.id = ${sessionId}
