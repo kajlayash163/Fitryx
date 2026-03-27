@@ -294,17 +294,10 @@ export default function LandingPage() {
               </Button>
             </Link>
           </div>
-
-          {/* Trust badges */}
-          <div className="flex items-center justify-center gap-6 mt-12 animate-fade-up" style={{ animationDelay: '1.3s', animationFillMode: 'both' }}>
-            {[{ icon: ShieldCheck, text: 'Verified Gyms' }, { icon: Star, text: '4.8★ Avg Rating' }, { icon: Users, text: '25K+ Members' }].map(({ icon: I, text }) => (
-              <div key={text} className="flex items-center gap-1.5 text-muted-foreground/50 text-xs font-medium"><I className="w-3.5 h-3.5" /> {text}</div>
-            ))}
-          </div>
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground/30 animate-fade-up" style={{ animationDelay: '1.6s', animationFillMode: 'both' }}>
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground/30 animate-fade-up" style={{ animationDelay: '1.3s', animationFillMode: 'both' }}>
           <span className="text-[10px] tracking-[0.3em] uppercase font-medium">Scroll</span>
           <div className="w-5 h-8 rounded-full border border-border flex items-start justify-center pt-1.5">
             <div className="w-1 h-2 rounded-full bg-muted-foreground/50 animate-bounce" />
