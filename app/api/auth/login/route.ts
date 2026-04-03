@@ -7,7 +7,7 @@ import { rateLimit } from '@/lib/rate-limit'
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
-    const { allowed } = rateLimit(`login:${ip}`, 10, 60000)
+    const { allowed } = await rateLimit(`login:${ip}`, 10, 60000)
     if (!allowed) {
       return NextResponse.json({ error: 'Too many login attempts. Please try again in a minute.' }, { status: 429 })
     }
@@ -17,9 +17,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email and password required' }, { status: 400 })
     }
 
-    const [user] = await sql`SELECT * FROM users WHERE email = ${email}`
+    const [user] = await sql`SELECT * FROM users WHERE email = ${email.toLowerCase()}`
     if (!user) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
+    }
+
+    // Block Google-only users (no password set)
+    if (!user.password) {
+      return NextResponse.json({ error: 'This account uses Google Sign-In. Please use the "Continue with Google" button.' }, { status: 400 })
+    }
+
+    // Block unverified users
+    if (!user.is_verified) {
+      return NextResponse.json({
+        error: 'Please verify your email before signing in.',
+        needsVerification: true,
+        email: user.email,
+      }, { status: 403 })
     }
 
     const valid = await comparePassword(password, user.password)
@@ -27,6 +41,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
     }
 
+    // Session rotation: delete old sessions for this user, create new
+    await sql`DELETE FROM sessions WHERE user_id = ${user.id}`
     const sessionId = await createSession(user.id)
     const cookieStore = await cookies()
     cookieStore.set('session', sessionId, {

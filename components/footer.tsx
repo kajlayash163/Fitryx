@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { Dumbbell, Twitter, Github, Linkedin } from 'lucide-react'
+import { Twitter, Github, Linkedin } from 'lucide-react'
+import FitryxLogo from '@/components/fitryx-logo'
 
 export default function Footer() {
   return (
@@ -8,9 +9,7 @@ export default function Footer() {
         {/* Brand */}
         <div className="md:col-span-1 flex flex-col gap-4">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Dumbbell className="w-4 h-4 text-primary-foreground" />
-            </div>
+            <FitryxLogo className="w-8 h-8" />
             <span className="text-lg font-semibold text-foreground">Fitryx</span>
           </Link>
           <p className="text-sm text-muted-foreground leading-relaxed">

@@ -3,12 +3,20 @@ import sql from '@/lib/db'
 import { createSession } from '@/lib/auth'
 import { verifyOTP } from '@/lib/otp'
 import { cookies } from 'next/headers'
+import { rateLimit } from '@/lib/rate-limit'
+import { sendWelcomeEmail } from '@/lib/welcome-email'
 
 export async function POST(req: NextRequest) {
   try {
     const { email, otp } = await req.json()
     if (!email || !otp) {
       return NextResponse.json({ error: 'Email and verification code are required' }, { status: 400 })
+    }
+
+    // Rate limit: 5 OTP attempts per 15 minutes per email
+    const { allowed } = await rateLimit(`otp-verify:${email.toLowerCase()}`, 5, 15 * 60 * 1000)
+    if (!allowed) {
+      return NextResponse.json({ error: 'Too many verification attempts. Please wait 15 minutes.' }, { status: 429 })
     }
 
     // Find user
@@ -43,6 +51,9 @@ export async function POST(req: NextRequest) {
     await sql`UPDATE users SET is_verified = true WHERE id = ${user.id}`
     // Clean up OTPs
     await sql`DELETE FROM user_otps WHERE user_id = ${user.id}`
+
+    // Send welcome email (fire-and-forget)
+    sendWelcomeEmail(user.email, user.name).catch(() => {})
 
     // Create session now
     const sessionId = await createSession(user.id)

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   Plus, Search, ShieldCheck, ShieldOff, Pencil, Trash2,
-  X, Check, Loader2, Dumbbell, MapPin, DollarSign, ListChecks
+  X, Check, Loader2, Dumbbell, MapPin, DollarSign, ListChecks, Upload, ImagePlus
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,6 +19,7 @@ type Gym = {
   price_quarterly: number
   price_yearly: number
   facilities: string[]
+  images: string[]
   rating: number
   review_count: number
   verified: boolean
@@ -34,6 +35,7 @@ const EMPTY_FORM = {
   name: '', location: '', description: '',
   price_monthly: '', price_quarterly: '', price_yearly: '',
   facilities: [] as string[],
+  images: [] as string[],
 }
 
 function GymModal({
@@ -51,8 +53,43 @@ function GymModal({
     price_quarterly: String(gym?.price_quarterly ?? ''),
     price_yearly: String(gym?.price_yearly ?? ''),
     facilities: gym?.facilities ?? [] as string[],
+    images: gym?.images ?? [] as string[],
   })
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [imageUrl, setImageUrl] = useState('')
+
+  const handleFileUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return
+    setUploading(true)
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const fd = new FormData()
+        fd.append('file', files[i])
+        const res = await fetch('/api/upload', { method: 'POST', body: fd })
+        if (res.ok) {
+          const data = await res.json()
+          setForm(prev => ({ ...prev, images: [...prev.images, data.url] }))
+        } else {
+          const err = await res.json()
+          toast.error(err.error || 'Upload failed')
+        }
+      }
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const addImageUrl = () => {
+    if (imageUrl.trim() && imageUrl.startsWith('http')) {
+      setForm(prev => ({ ...prev, images: [...prev.images, imageUrl.trim()] }))
+      setImageUrl('')
+    }
+  }
+
+  const removeImage = (index: number) => {
+    setForm(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -170,6 +207,65 @@ function GymModal({
                   {f}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Images */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-foreground flex items-center gap-2">
+              <ImagePlus className="w-3.5 h-3.5 text-muted-foreground" /> Images
+            </label>
+
+            {/* Image previews */}
+            {form.images.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {form.images.map((url, i) => (
+                  <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border/40 group">
+                    <img src={url} alt={`Gym ${i + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(i)}
+                      className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                    >
+                      <Trash2 className="w-4 h-4 text-white" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Upload zone */}
+            <label className="flex flex-col items-center justify-center w-full h-24 rounded-xl border-2 border-dashed border-border/40 hover:border-primary/40 bg-secondary/20 hover:bg-secondary/30 transition-colors cursor-pointer">
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={e => handleFileUpload(e.target.files)}
+                disabled={uploading}
+              />
+              {uploading ? (
+                <Loader2 className="w-5 h-5 text-primary animate-spin" />
+              ) : (
+                <>
+                  <Upload className="w-5 h-5 text-muted-foreground mb-1" />
+                  <span className="text-xs text-muted-foreground">Click to upload images</span>
+                </>
+              )}
+            </label>
+
+            {/* URL input fallback */}
+            <div className="flex gap-2">
+              <Input
+                value={imageUrl}
+                onChange={e => setImageUrl(e.target.value)}
+                placeholder="Or paste image URL..."
+                className="flex-1 bg-secondary/50 border-border/60 text-xs h-8"
+                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addImageUrl())}
+              />
+              <Button type="button" onClick={addImageUrl} size="sm" variant="ghost" className="h-8 text-xs border border-border/40">
+                Add
+              </Button>
             </div>
           </div>
 

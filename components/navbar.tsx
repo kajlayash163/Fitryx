@@ -2,10 +2,10 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { Menu, X, Dumbbell, MapPin, LogOut } from 'lucide-react'
+import { Menu, X, MapPin, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-
+import FitryxLogo from '@/components/fitryx-logo'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -47,8 +47,8 @@ export default function Navbar() {
       <nav className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center group-hover:shadow-[0_0_16px_oklch(0.65_0.22_195/0.5)] transition-shadow duration-300">
-            <Dumbbell className="w-4 h-4 text-primary-foreground" />
+          <div className="group-hover:shadow-[0_0_16px_oklch(0.65_0.22_195/0.5)] transition-shadow duration-300 rounded-[10px]">
+            <FitryxLogo className="w-8 h-8" />
           </div>
           <span className="text-lg font-semibold tracking-tight text-foreground">Fitryx</span>
         </Link>
@@ -70,12 +70,10 @@ export default function Navbar() {
           ))}
         </div>
 
-        {/* Desktop Actions */}
-        <div className="hidden md:flex items-center gap-3">
-          {isLoading ? (
-            <div className="w-20 h-9 rounded-md bg-muted/30 animate-pulse" />
-          ) : user ? (
-            <div className="flex items-center gap-2">
+        {/* Desktop Actions — fixed min-width prevents layout shift */}
+        <div className="hidden md:flex items-center gap-3 min-w-[180px] justify-end">
+          {user ? (
+            <div className={`flex items-center gap-2 transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
               {user.role === 'admin' && (
                 <Link href="/admin">
                   <Button variant="ghost" size="sm" className="text-primary hover:text-primary">
@@ -90,8 +88,8 @@ export default function Navbar() {
                   </div>
                   <span className="text-sm font-medium text-foreground">{user.name}</span>
                 </Link>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="icon"
                   className="w-8 h-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-1 rounded-full transition-colors"
                   onClick={async () => {
@@ -105,7 +103,7 @@ export default function Navbar() {
               </div>
             </div>
           ) : (
-            <>
+            <div className={`flex items-center gap-3 transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
               <Link href="/login">
                 <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
                   Sign in
@@ -116,7 +114,7 @@ export default function Navbar() {
                   Get started
                 </Button>
               </Link>
-            </>
+            </div>
           )}
         </div>
 
@@ -153,8 +151,8 @@ export default function Navbar() {
                     <Button variant="outline" className="w-full border-primary/20 hover:bg-primary/10">Dashboard</Button>
                   </Link>
                 )}
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   className="w-full justify-center text-destructive hover:bg-destructive/10 hover:text-destructive"
                   onClick={async () => {
                     await fetch('/api/auth/logout', { method: 'POST' })

@@ -26,7 +26,14 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     if (!user || user.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     const { id } = await params
     if (String(user.id) === id) return NextResponse.json({ error: 'Cannot delete yourself' }, { status: 400 })
+
+    // Cascade cleanup: sessions, favorites, OTPs, reviews
+    await sql`DELETE FROM sessions WHERE user_id = ${id}`
+    await sql`DELETE FROM favorites WHERE user_id = ${id}`
+    await sql`DELETE FROM user_otps WHERE user_id = ${id}`
+    await sql`DELETE FROM reviews WHERE user_id = ${id}`
     await sql`DELETE FROM users WHERE id = ${id}`
+
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('[user DELETE]', err)

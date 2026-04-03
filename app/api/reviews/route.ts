@@ -31,8 +31,8 @@ export async function POST(req: NextRequest) {
     if (!gym_id || !rating || !comment?.trim()) {
       return NextResponse.json({ error: 'gym_id, rating, and comment required' }, { status: 400 })
     }
-    if (rating < 1 || rating > 5) {
-      return NextResponse.json({ error: 'Rating must be 1-5' }, { status: 400 })
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      return NextResponse.json({ error: 'Rating must be an integer from 1 to 5' }, { status: 400 })
     }
     // Sanitize and cap length
     const cleanComment = comment.trim().replace(/<[^>]*>/g, '').slice(0, 1000)

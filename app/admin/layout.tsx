@@ -8,6 +8,7 @@ import {
   Menu, X, ChevronRight, Bell, Settings
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import FitryxLogo from '@/components/fitryx-logo'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -73,9 +74,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Logo */}
         <div className="flex items-center justify-between px-5 h-16 border-b border-sidebar-border">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-              <Dumbbell className="w-3.5 h-3.5 text-primary-foreground" />
-            </div>
+            <FitryxLogo className="w-7 h-7" />
             <span className="font-semibold text-sidebar-foreground">Fitryx</span>
           </Link>
           <button className="lg:hidden text-muted-foreground" onClick={() => setSidebarOpen(false)}>

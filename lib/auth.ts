@@ -26,14 +26,26 @@ export async function getSession() {
   const sessionId = cookieStore.get('session')?.value
   if (!sessionId) return null
 
-  const rows = await sql`
-    SELECT u.id, u.name, u.email, u.role, u.created_at, u.is_verified
-    FROM sessions s
-    JOIN users u ON s.user_id = u.id
-    WHERE s.id = ${sessionId}
-      AND s.expires_at > NOW()
-  `
-  return rows[0] ?? null
+  try {
+    const rows = await sql`
+      SELECT u.id, u.name, u.email, u.role, u.created_at, u.is_verified, u.google_id
+      FROM sessions s
+      JOIN users u ON s.user_id = u.id
+      WHERE s.id = ${sessionId}
+        AND s.expires_at > NOW()
+    `
+    return rows[0] ?? null
+  } catch {
+    // Fallback if google_id column doesn't exist yet
+    const rows = await sql`
+      SELECT u.id, u.name, u.email, u.role, u.created_at, u.is_verified
+      FROM sessions s
+      JOIN users u ON s.user_id = u.id
+      WHERE s.id = ${sessionId}
+        AND s.expires_at > NOW()
+    `
+    return rows[0] ? { ...rows[0], google_id: null } : null
+  }
 }
 
 export async function deleteSession() {

@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Search, Star, MapPin, SlidersHorizontal, X, ShieldCheck, ArrowRight, BarChart2, Clock, Phone, Shield, Users, Heart, ChevronDown } from 'lucide-react'
+import { Search, Star, MapPin, SlidersHorizontal, X, ShieldCheck, ArrowRight, BarChart2, Clock, Shield, Users, Heart, ChevronDown, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -37,7 +37,10 @@ const SORT_OPTIONS = [
   { label: 'Name (A→Z)', value: 'name_asc' },
 ]
 const GYMS_PER_PAGE = 9
+const PRICE_MIN = 500
+const PRICE_MAX = 5000
 
+/* ────── GYM CARD ────── */
 function GymCard({ gym, delay, isFavorited, onToggleFav }: { gym: Gym; delay: number; isFavorited: boolean; onToggleFav: () => void }) {
   const { ref, isVisible } = useReveal()
   const img = gym.images?.[0] || '/images/gym-1.jpg'
@@ -46,7 +49,7 @@ function GymCard({ gym, delay, isFavorited, onToggleFav }: { gym: Gym; delay: nu
   return (
     <div
       ref={ref as React.RefObject<HTMLDivElement>}
-      className={`card-surface rounded-2xl overflow-hidden group hover:border-primary/30 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-primary/5 transition-all duration-500 reveal-hidden flex flex-col h-full ${isVisible ? 'reveal-visible' : ''}`}
+      className={`card-surface rounded-2xl overflow-hidden group hover:border-primary/30 transition-all duration-500 reveal-hidden flex flex-col h-full ${isVisible ? 'reveal-visible' : ''}`}
       style={{ transitionDelay: `${delay}ms` }}
     >
       <div className="relative aspect-[16/9] overflow-hidden shrink-0">
@@ -106,7 +109,7 @@ function GymCard({ gym, delay, isFavorited, onToggleFav }: { gym: Gym; delay: nu
           )}
         </div>
 
-        <div className="flex items-center justify-between pt-4 border-t border-border/40 mt-auto pt-5">
+        <div className="flex items-center justify-between border-t border-border/40 mt-auto pt-5">
           <div>
             <span className="text-xl font-bold text-primary">₹{gym.price_monthly}</span>
             <span className="text-xs text-muted-foreground">/mo</span>
@@ -129,6 +132,58 @@ function GymCard({ gym, delay, isFavorited, onToggleFav }: { gym: Gym; delay: nu
   )
 }
 
+/* ────── PRICE RANGE SLIDER (dual-thumb) ────── */
+function PriceSlider({ min, max, valueMin, valueMax, onChange }: {
+  min: number; max: number; valueMin: number; valueMax: number; onChange: (lo: number, hi: number) => void
+}) {
+  const track = useRef<HTMLDivElement>(null)
+
+  const pctMin = ((valueMin - min) / (max - min)) * 100
+  const pctMax = ((valueMax - min) / (max - min)) * 100
+
+  const handlePointer = (thumb: 'min' | 'max') => (e: React.PointerEvent) => {
+    e.preventDefault()
+    const el = track.current; if (!el) return
+    const move = (ev: PointerEvent) => {
+      const r = el.getBoundingClientRect()
+      const pct = Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width))
+      const val = Math.round((min + pct * (max - min)) / 100) * 100
+      if (thumb === 'min') onChange(Math.min(val, valueMax - 100), valueMax)
+      else onChange(valueMin, Math.max(val, valueMin + 100))
+    }
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up) }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+  }
+
+  return (
+    <div className="pt-2 pb-1">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-medium text-foreground bg-secondary/60 px-2 py-0.5 rounded">₹{valueMin.toLocaleString()}</span>
+        <span className="text-xs font-medium text-foreground bg-secondary/60 px-2 py-0.5 rounded">₹{valueMax.toLocaleString()}</span>
+      </div>
+      <div ref={track} className="relative h-1.5 rounded-full bg-muted/40 cursor-pointer">
+        {/* Active range */}
+        <div className="absolute h-full rounded-full bg-primary/60" style={{ left: `${pctMin}%`, width: `${pctMax - pctMin}%` }} />
+        {/* Min thumb */}
+        <div
+          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-background border-2 border-primary shadow-md cursor-grab active:cursor-grabbing hover:scale-110 transition-transform"
+          style={{ left: `${pctMin}%` }}
+          onPointerDown={handlePointer('min')}
+        />
+        {/* Max thumb */}
+        <div
+          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-background border-2 border-primary shadow-md cursor-grab active:cursor-grabbing hover:scale-110 transition-transform"
+          style={{ left: `${pctMax}%` }}
+          onPointerDown={handlePointer('max')}
+        />
+      </div>
+    </div>
+  )
+}
+
+
+/* ────── MAIN PAGE ────── */
 export default function GymsPage() {
   const [allGyms, setAllGyms] = useState<Gym[]>([])
   const [loading, setLoading] = useState(true)
@@ -136,12 +191,11 @@ export default function GymsPage() {
   const [selectedFacilities, setSelectedFacilities] = useState<string[]>([])
   const [verifiedOnly, setVerifiedOnly] = useState(false)
   const [genderFilter, setGenderFilter] = useState<string>('')
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sortBy, setSortBy] = useState('rating_desc')
-  const [minPrice, setMinPrice] = useState('')
-  const [maxPrice, setMaxPrice] = useState('')
+  const [priceRange, setPriceRange] = useState<[number, number]>([PRICE_MIN, PRICE_MAX])
   const [page, setPage] = useState(1)
   const [favorites, setFavorites] = useState<number[]>([])
+  const [filterOpen, setFilterOpen] = useState(false)
 
   const fetchGyms = useCallback(async () => {
     setLoading(true)
@@ -163,7 +217,6 @@ export default function GymsPage() {
     return () => clearTimeout(t)
   }, [fetchGyms, search.length])
 
-  // Fetch favorites
   useEffect(() => {
     fetch('/api/favorites')
       .then(r => r.json())
@@ -171,8 +224,7 @@ export default function GymsPage() {
       .catch(() => {})
   }, [])
 
-  // Reset page when filters change
-  useEffect(() => { setPage(1) }, [search, selectedFacilities, verifiedOnly, genderFilter, sortBy, minPrice, maxPrice])
+  useEffect(() => { setPage(1) }, [search, selectedFacilities, verifiedOnly, genderFilter, sortBy, priceRange])
 
   const toggleFacility = (f: string) => {
     setSelectedFacilities(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f])
@@ -185,28 +237,26 @@ export default function GymsPage() {
       body: JSON.stringify({ gym_id: gymId }),
     })
     const data = await res.json()
-    if (data.favorited) {
-      setFavorites(prev => [...prev, gymId])
-    } else {
-      setFavorites(prev => prev.filter(id => id !== gymId))
-    }
+    if (data.favorited) setFavorites(prev => [...prev, gymId])
+    else setFavorites(prev => prev.filter(id => id !== gymId))
   }
 
-  // Apply client-side filters, sort, and pagination
+  const clearAllFilters = () => {
+    setSelectedFacilities([]); setVerifiedOnly(false); setGenderFilter(''); setPriceRange([PRICE_MIN, PRICE_MAX])
+  }
+
+  // Compute active filter count
+  const activeFilterCount = selectedFacilities.length
+    + (verifiedOnly ? 1 : 0)
+    + (genderFilter ? 1 : 0)
+    + (priceRange[0] !== PRICE_MIN || priceRange[1] !== PRICE_MAX ? 1 : 0)
+
+  // Apply client-side filters + sort
   let gyms = [...allGyms]
+  if (selectedFacilities.length > 0) gyms = gyms.filter(gym => selectedFacilities.every(f => gym.facilities?.includes(f)))
+  if (priceRange[0] !== PRICE_MIN) gyms = gyms.filter(g => g.price_monthly >= priceRange[0])
+  if (priceRange[1] !== PRICE_MAX) gyms = gyms.filter(g => g.price_monthly <= priceRange[1])
 
-  // Multi-facility filter
-  if (selectedFacilities.length > 0) {
-    gyms = gyms.filter(gym => selectedFacilities.every(f => gym.facilities?.includes(f)))
-  }
-
-  // Price range filter
-  const minP = parseFloat(minPrice)
-  const maxP = parseFloat(maxPrice)
-  if (!isNaN(minP)) gyms = gyms.filter(g => g.price_monthly >= minP)
-  if (!isNaN(maxP)) gyms = gyms.filter(g => g.price_monthly <= maxP)
-
-  // Sort
   gyms.sort((a, b) => {
     switch (sortBy) {
       case 'price_asc': return a.price_monthly - b.price_monthly
@@ -222,20 +272,23 @@ export default function GymsPage() {
 
   return (
     <div className="min-h-screen pt-20">
-      <div className="max-w-7xl mx-auto px-6 py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
           <div>
             <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5 mb-3 animate-fade-up" style={{ animationDelay: '0.1s', animationFillMode: 'both' }}>Listings</Badge>
             <h1 className="text-4xl font-bold text-foreground animate-fade-up" style={{ animationDelay: '0.2s', animationFillMode: 'both' }}>Browse Gyms</h1>
             <p className="text-muted-foreground mt-2 animate-fade-up" style={{ animationDelay: '0.3s', animationFillMode: 'both' }}>{totalGyms} gyms available</p>
           </div>
-          <div className="flex items-center gap-3">
-            {/* Sort Dropdown */}
+
+          {/* Toolbar: Search + Sort + Filter */}
+          <div className="flex items-center gap-3 animate-fade-up flex-wrap" style={{ animationDelay: '0.4s', animationFillMode: 'both' }}>
+            {/* Sort */}
             <div className="relative">
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value)}
-                className="appearance-none bg-secondary/50 border border-border/60 rounded-lg px-3 py-2 pr-8 text-sm text-foreground focus:outline-none focus:border-primary/50 cursor-pointer"
+                className="appearance-none bg-secondary/50 border border-border/60 rounded-xl px-3 py-2.5 pr-8 text-sm text-foreground focus:outline-none focus:border-primary/50 cursor-pointer"
               >
                 {SORT_OPTIONS.map(opt => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -243,161 +296,245 @@ export default function GymsPage() {
               </select>
               <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
             </div>
+
+            {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search gyms or locations..."
+                placeholder="Search gyms..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="pl-9 w-72 bg-secondary/50 border-border/60 focus:border-primary/50"
+                className="pl-9 w-full sm:w-64 bg-secondary/50 border-border/60 focus:border-primary/50 rounded-xl"
               />
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="border border-border/60 hover:border-primary/40 hover:bg-primary/5 lg:hidden"
-              onClick={() => setSidebarOpen(o => !o)}
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-            </Button>
+
+            {/* Filter Button */}
+            <div className="relative">
+              <Button
+                variant="ghost"
+                onClick={() => setFilterOpen(o => !o)}
+                className={`border rounded-xl px-4 gap-2 transition-all ${filterOpen || activeFilterCount > 0 ? 'border-primary/40 bg-primary/5 text-primary' : 'border-border/60 hover:border-primary/40 hover:bg-primary/5'}`}
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+                <span className="text-sm">Filters</span>
+                {activeFilterCount > 0 && (
+                  <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-semibold">{activeFilterCount}</span>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
 
-        <div className="flex gap-8">
-          {/* Sidebar Filters */}
-          <aside className={`${sidebarOpen ? 'block' : 'hidden'} lg:block w-56 shrink-0`}>
-            <div className="card-surface rounded-2xl p-5 sticky top-24">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-foreground">Filters</h3>
-                {(selectedFacilities.length > 0 || verifiedOnly || genderFilter || minPrice || maxPrice) && (
-                  <button
-                    onClick={() => { setSelectedFacilities([]); setVerifiedOnly(false); setGenderFilter(''); setMinPrice(''); setMaxPrice('') }}
-                    className="text-xs text-primary hover:underline"
-                  >
-                    Clear all
-                  </button>
-                )}
-              </div>
+        {/* ═══════════ PREMIUM FILTER OVERLAY ═══════════ */}
+        {filterOpen && (
+          <>
+            {/* Backdrop with blur */}
+            <div
+              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity"
+              onClick={() => setFilterOpen(false)}
+            />
 
-              {/* Verified */}
-              <div className="mb-5">
-                <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2.5 font-medium">Status</p>
-                <button
-                  onClick={() => setVerifiedOnly(v => !v)}
-                  className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm transition-colors ${verifiedOnly ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:bg-accent/50'}`}
-                >
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  Verified only
-                </button>
-              </div>
+            {/* Centered Modal */}
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setFilterOpen(false)}>
+              <div
+                className="w-full max-w-lg rounded-3xl border border-border/40 bg-[oklch(0.12_0.014_250)] shadow-[0_0_80px_-12px_var(--glow-primary)] animate-fade-up overflow-hidden"
+                style={{ animationDuration: '0.35s' }}
+                onClick={e => e.stopPropagation()}
+              >
+                {/* Glow accent line at top */}
+                <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
 
-              {/* Gender Type */}
-              <div className="mb-5">
-                <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2.5 font-medium">For</p>
-                {[{ label: 'All Gyms', value: '' }, { label: 'Women Only', value: 'women_only' }, { label: 'Men Only', value: 'men_only' }].map(opt => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setGenderFilter(genderFilter === opt.value ? '' : opt.value)}
-                    className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm transition-colors mb-1 ${genderFilter === opt.value ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:bg-accent/50'}`}
-                  >
-                    <Users className="w-3.5 h-3.5" />
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Price Range */}
-              <div className="mb-5">
-                <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2.5 font-medium">Price Range (₹/mo)</p>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    placeholder="Min"
-                    value={minPrice}
-                    onChange={e => setMinPrice(e.target.value)}
-                    className="bg-secondary/50 border-border/60 text-sm h-8"
-                  />
-                  <span className="text-muted-foreground text-xs">–</span>
-                  <Input
-                    type="number"
-                    placeholder="Max"
-                    value={maxPrice}
-                    onChange={e => setMaxPrice(e.target.value)}
-                    className="bg-secondary/50 border-border/60 text-sm h-8"
-                  />
-                </div>
-              </div>
-
-              {/* Facilities */}
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2.5 font-medium">Facilities</p>
-                <div className="flex flex-col gap-1.5">
-                  {ALL_FACILITIES.map(f => (
+                <div className="p-6 sm:p-8">
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-7">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <SlidersHorizontal className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <h2 className="text-base font-semibold text-foreground">Filters</h2>
+                        <p className="text-xs text-muted-foreground">Refine your gym search</p>
+                      </div>
+                    </div>
                     <button
-                      key={f}
-                      onClick={() => toggleFacility(f)}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors text-left ${selectedFacilities.includes(f) ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:bg-accent/50'}`}
+                      onClick={() => setFilterOpen(false)}
+                      className="w-8 h-8 rounded-xl bg-secondary/60 border border-border/40 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
                     >
-                      {selectedFacilities.includes(f) && <X className="w-3 h-3 shrink-0" />}
-                      {f}
+                      <X className="w-4 h-4" />
                     </button>
-                  ))}
+                  </div>
+
+                  {/* Sort */}
+                  <div className="mb-6">
+                    <p className="text-[11px] text-muted-foreground uppercase tracking-[0.15em] mb-3 font-medium">Sort by</p>
+                    <div className="grid grid-cols-4 gap-1.5 bg-secondary/30 rounded-xl p-1">
+                      {SORT_OPTIONS.map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => setSortBy(opt.value)}
+                          className={`px-2 py-2 rounded-lg text-[11px] font-medium transition-all ${sortBy === opt.value ? 'bg-primary/15 text-primary shadow-sm border border-primary/20' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                          {opt.label.split(' ')[0]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Price Range */}
+                  <div className="mb-6">
+                    <p className="text-[11px] text-muted-foreground uppercase tracking-[0.15em] mb-3 font-medium">Monthly Price</p>
+                    <div className="bg-secondary/20 rounded-xl p-4 border border-border/20">
+                      <PriceSlider min={PRICE_MIN} max={PRICE_MAX} valueMin={priceRange[0]} valueMax={priceRange[1]} onChange={(lo, hi) => setPriceRange([lo, hi])} />
+                    </div>
+                  </div>
+
+                  {/* Quick Toggles — 3 cards side by side */}
+                  <div className="mb-6">
+                    <p className="text-[11px] text-muted-foreground uppercase tracking-[0.15em] mb-3 font-medium">Quick Filters</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        onClick={() => setVerifiedOnly(v => !v)}
+                        className={`group relative flex flex-col items-center gap-2 px-3 py-3.5 rounded-xl text-xs font-medium transition-all border ${verifiedOnly ? 'bg-primary/10 text-primary border-primary/25 shadow-[0_0_15px_-3px_var(--glow-primary)]' : 'bg-secondary/20 text-muted-foreground border-border/20 hover:border-border/40 hover:bg-secondary/30'}`}
+                      >
+                        <ShieldCheck className="w-5 h-5" />
+                        <span>Verified</span>
+                        {verifiedOnly && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary" />}
+                      </button>
+                      <button
+                        onClick={() => setGenderFilter(genderFilter === 'women_only' ? '' : 'women_only')}
+                        className={`group relative flex flex-col items-center gap-2 px-3 py-3.5 rounded-xl text-xs font-medium transition-all border ${genderFilter === 'women_only' ? 'bg-pink-500/10 text-pink-400 border-pink-400/25 shadow-[0_0_15px_-3px_oklch(0.6_0.2_350/0.3)]' : 'bg-secondary/20 text-muted-foreground border-border/20 hover:border-border/40 hover:bg-secondary/30'}`}
+                      >
+                        <Users className="w-5 h-5" />
+                        <span>Women</span>
+                        {genderFilter === 'women_only' && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-pink-400" />}
+                      </button>
+                      <button
+                        onClick={() => setGenderFilter(genderFilter === 'men_only' ? '' : 'men_only')}
+                        className={`group relative flex flex-col items-center gap-2 px-3 py-3.5 rounded-xl text-xs font-medium transition-all border ${genderFilter === 'men_only' ? 'bg-blue-500/10 text-blue-400 border-blue-400/25 shadow-[0_0_15px_-3px_oklch(0.5_0.2_260/0.3)]' : 'bg-secondary/20 text-muted-foreground border-border/20 hover:border-border/40 hover:bg-secondary/30'}`}
+                      >
+                        <Users className="w-5 h-5" />
+                        <span>Men</span>
+                        {genderFilter === 'men_only' && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-400" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Facilities */}
+                  <div className="mb-7">
+                    <p className="text-[11px] text-muted-foreground uppercase tracking-[0.15em] mb-3 font-medium">Facilities</p>
+                    <div className="flex flex-wrap gap-2">
+                      {ALL_FACILITIES.map(f => (
+                        <button
+                          key={f}
+                          onClick={() => toggleFacility(f)}
+                          className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all border ${selectedFacilities.includes(f) ? 'bg-primary/10 text-primary border-primary/25 shadow-[0_0_10px_-3px_var(--glow-primary)]' : 'bg-secondary/20 text-muted-foreground border-border/20 hover:border-border/40 hover:bg-secondary/30'}`}
+                        >
+                          {selectedFacilities.includes(f) && <Check className="w-3 h-3 inline mr-1.5 -mt-0.5" />}{f}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-between pt-5 border-t border-border/20">
+                    <button
+                      onClick={clearAllFilters}
+                      className={`text-sm font-medium transition-colors ${activeFilterCount > 0 ? 'text-muted-foreground hover:text-destructive' : 'text-muted/40 cursor-default'}`}
+                      disabled={activeFilterCount === 0}
+                    >
+                      Clear all{activeFilterCount > 0 && ` (${activeFilterCount})`}
+                    </button>
+                    <Button
+                      onClick={() => setFilterOpen(false)}
+                      className="bg-primary text-primary-foreground hover:opacity-90 px-8 h-10 rounded-xl font-semibold text-sm transition-all hover:shadow-[0_0_30px_-5px_var(--glow-primary)]"
+                    >
+                      Show {totalGyms} gym{totalGyms !== 1 ? 's' : ''}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
-          </aside>
+          </>
+        )}
 
-          {/* Grid */}
-          <div className="flex-1 min-w-0">
-            {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="card-surface rounded-2xl overflow-hidden animate-pulse">
-                    <div className="aspect-[16/9] bg-muted/30" />
-                    <div className="p-5 space-y-3">
-                      <div className="h-5 w-3/4 rounded bg-muted/30" />
-                      <div className="h-4 w-1/2 rounded bg-muted/20" />
-                      <div className="h-4 w-full rounded bg-muted/20" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : totalGyms === 0 ? (
-              <div className="flex flex-col items-center justify-center py-32 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                  <Search className="w-7 h-7 text-primary" />
+        {/* Active filter pills */}
+        {activeFilterCount > 0 && (
+          <div className="flex flex-wrap items-center gap-2 mb-6 animate-fade-up" style={{ animationDuration: '0.3s' }}>
+            {verifiedOnly && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-medium">
+                <ShieldCheck className="w-3 h-3" /> Verified <button onClick={() => setVerifiedOnly(false)}><X className="w-3 h-3 ml-1 hover:text-destructive" /></button>
+              </span>
+            )}
+            {genderFilter && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-medium">
+                {genderFilter === 'women_only' ? 'Women Only' : 'Men Only'} <button onClick={() => setGenderFilter('')}><X className="w-3 h-3 ml-1 hover:text-destructive" /></button>
+              </span>
+            )}
+            {(priceRange[0] !== PRICE_MIN || priceRange[1] !== PRICE_MAX) && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-medium">
+                ₹{priceRange[0]}–₹{priceRange[1]} <button onClick={() => setPriceRange([PRICE_MIN, PRICE_MAX])}><X className="w-3 h-3 ml-1 hover:text-destructive" /></button>
+              </span>
+            )}
+            {selectedFacilities.map(f => (
+              <span key={f} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-medium">
+                {f} <button onClick={() => toggleFacility(f)}><X className="w-3 h-3 ml-1 hover:text-destructive" /></button>
+              </span>
+            ))}
+            <button onClick={clearAllFilters} className="text-xs text-muted-foreground hover:text-primary ml-1">Clear all</button>
+          </div>
+        )}
+
+        {/* Grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="card-surface rounded-2xl overflow-hidden animate-pulse">
+                <div className="aspect-[16/9] bg-muted/30" />
+                <div className="p-5 space-y-3">
+                  <div className="h-5 w-3/4 rounded bg-muted/30" />
+                  <div className="h-4 w-1/2 rounded bg-muted/20" />
+                  <div className="h-4 w-full rounded bg-muted/20" />
                 </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">No gyms found</h3>
-                <p className="text-muted-foreground text-sm">Try adjusting your search or filters</p>
               </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {paginatedGyms.map((gym, i) => (
-                    <GymCard
-                      key={gym.id}
-                      gym={gym}
-                      delay={i * 60}
-                      isFavorited={favorites.includes(gym.id)}
-                      onToggleFav={() => toggleFavorite(gym.id)}
-                    />
-                  ))}
-                </div>
-                {page < totalPages && (
-                  <div className="flex justify-center mt-10">
-                    <Button
-                      variant="ghost"
-                      onClick={() => setPage(p => p + 1)}
-                      className="border border-border/60 hover:border-primary/40 hover:bg-primary/5 px-8"
-                    >
-                      Load More ({totalGyms - paginatedGyms.length} remaining)
-                    </Button>
-                  </div>
-                )}
-              </>
+            ))}
+          </div>
+        ) : totalGyms === 0 ? (
+          <div className="flex flex-col items-center justify-center py-32 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+              <Search className="w-7 h-7 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">No gyms found</h3>
+            <p className="text-muted-foreground text-sm">Try adjusting your search or filters</p>
+            {activeFilterCount > 0 && (
+              <Button variant="ghost" onClick={clearAllFilters} className="mt-4 text-primary">Clear all filters</Button>
             )}
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              {paginatedGyms.map((gym, i) => (
+                <GymCard
+                  key={gym.id}
+                  gym={gym}
+                  delay={i * 60}
+                  isFavorited={favorites.includes(gym.id)}
+                  onToggleFav={() => toggleFavorite(gym.id)}
+                />
+              ))}
+            </div>
+            {page < totalPages && (
+              <div className="flex justify-center mt-10">
+                <Button
+                  variant="ghost"
+                  onClick={() => setPage(p => p + 1)}
+                  className="border border-border/60 hover:border-primary/40 hover:bg-primary/5 px-8 rounded-xl"
+                >
+                  Load More ({totalGyms - paginatedGyms.length} remaining)
+                </Button>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   )

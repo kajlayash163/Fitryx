@@ -6,7 +6,7 @@ import { generateOTP, hashOTP, sendOTPEmail } from '@/lib/otp'
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
-    const { allowed } = rateLimit(`resend-otp:${ip}`, 3, 3600000) // 3 per hour
+    const { allowed } = await rateLimit(`resend-otp:${ip}`, 3, 3600000) // 3 per hour
     if (!allowed) {
       return NextResponse.json({ error: 'Too many requests. Please wait before requesting another code.' }, { status: 429 })
     }

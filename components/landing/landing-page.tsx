@@ -93,9 +93,9 @@ function Feature({ title, desc, img, rev, icon: Icon, num }: {
   const { ref: iRef, vis: iVis } = useScrollReveal(150)
   const tilt = use3DTilt()
   return (
-    <div className={`flex flex-col ${rev ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-16 lg:gap-24`}>
+    <div className={`flex flex-col ${rev ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-8 lg:gap-24`}>
       <div ref={tRef} className={`flex-1 transition-all duration-700 ${tVis ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
-        <span className="text-7xl font-black text-muted/30 block mb-4 select-none">{num}</span>
+        <span className="text-5xl lg:text-7xl font-black text-muted/30 block mb-3 lg:mb-4 select-none">{num}</span>
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-secondary/50 text-muted-foreground text-xs font-medium mb-4">
           <Icon className="w-3.5 h-3.5 text-primary" /> Feature
         </div>
@@ -158,7 +158,7 @@ function GymPreviewCard({ name, location, rating, reviewCount, price, image, des
         {womenSafety && (
           <div className="flex items-center gap-1.5 mt-2.5">
             <Shield className="w-3.5 h-3.5 text-green-400" />
-            <span className="text-xs text-green-400 font-medium">Women Safety: {womenSafety.toFixed(1)}/5</span>
+            <span className="text-xs text-green-400 font-medium">Women Safety: {Number(womenSafety).toFixed(1)}/5</span>
           </div>
         )}
         <div className="flex flex-wrap gap-1.5 mt-3">
@@ -238,11 +238,29 @@ export default function LandingPage() {
     return () => window.removeEventListener('mousemove', h)
   }, [])
 
-  const GYMS = [
-    { name: "Gold's Gym Malviya Nagar", location: 'Malviya Nagar, Jaipur, Rajasthan', rating: 4.9, reviewCount: 342, price: 2999, image: '/images/gym-weights.png', description: 'The Mecca of Bodybuilding — 11,000 sq ft spread across 3 floors with elite equipment.', facilities: ['Free Weights', 'Cardio', 'Personal Training', 'Lockers'], verified: true, openingHours: '5:30 AM - 10:30 PM', womenSafety: 4.2 },
-    { name: 'Corenergy Fitness', location: 'Vaishali Nagar, Jaipur, Rajasthan', rating: 5.0, reviewCount: 256, price: 2799, image: '/images/gym-cardio.png', description: 'Founded by a physiotherapist, providing state-of-the-art equipment and guidance.', facilities: ['Free Weights', 'Cardio', 'Strength Training', 'Yoga'], verified: true, openingHours: '5:00 AM - 10:00 PM', womenSafety: 4.0 },
-    { name: 'Multifit Vaishali Nagar', location: 'Vaishali Nagar, Jaipur, Rajasthan', rating: 4.7, reviewCount: 189, price: 3539, image: '/images/gym-crossfit.png', description: 'Multi-activity fitness center with CrossFit, swimming, and group sessions.', facilities: ['CrossFit', 'Pool', 'Yoga', 'Personal Training'], verified: true, openingHours: '6:00 AM - 10:00 PM', womenSafety: 4.5 },
-  ]
+  // Fetch real stats and featured gyms from API
+  const [realStats, setRealStats] = useState({ gyms: 0, avgRating: 0, cities: 0, reviews: 0 })
+  const [featuredGyms, setFeaturedGyms] = useState<{name:string;location:string;rating:number;reviewCount:number;price:number;image:string;description:string;facilities:string[];verified:boolean;openingHours:string;womenSafety:number|null}[]>([])
+  useEffect(() => {
+    fetch('/api/gyms')
+      .then(r => r.json())
+      .then(d => {
+        const gyms = d.gyms ?? []
+        const cities = new Set(gyms.map((g: { city?: string }) => g.city).filter(Boolean)).size
+        const totalReviews = gyms.reduce((s: number, g: { review_count?: number }) => s + (g.review_count || 0), 0)
+        const avgRating = gyms.length > 0 ? gyms.reduce((s: number, g: { rating?: number }) => s + Number(g.rating || 0), 0) / gyms.length : 0
+        setRealStats({ gyms: gyms.length, avgRating: Math.round(avgRating * 10) / 10, cities: Math.max(cities, 1), reviews: totalReviews })
+        // Top 3 by rating for featured
+        const top3 = [...gyms].sort((a: {rating?:number}, b: {rating?:number}) => Number(b.rating||0) - Number(a.rating||0)).slice(0, 3)
+        setFeaturedGyms(top3.map((g: {name:string;location:string;rating:number;review_count:number;price_monthly:number;images:string[];description:string;facilities:string[];verified:boolean;opening_hours:string;women_safety_rating:number|null}) => ({
+          name: g.name, location: g.location, rating: Number(g.rating), reviewCount: g.review_count || 0,
+          price: g.price_monthly, image: g.images?.[0] || '/images/gym-weights.png',
+          description: g.description || '', facilities: g.facilities || [],
+          verified: g.verified, openingHours: g.opening_hours || '', womenSafety: g.women_safety_rating
+        })))
+      })
+      .catch(() => {})
+  }, [])
 
   return (
     <main className="overflow-x-hidden">
@@ -262,13 +280,13 @@ export default function LandingPage() {
 
         <div className="relative z-10 max-w-5xl mx-auto">
           {/* Pill */}
-          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-border bg-secondary/80 backdrop-blur-md text-xs font-medium mb-10 text-muted-foreground animate-fade-up" style={{ animationDelay: '0.2s', animationFillMode: 'both' }}>
+          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-border bg-secondary/80 backdrop-blur-md text-xs font-medium mb-6 md:mb-10 text-muted-foreground animate-fade-up" style={{ animationDelay: '0.2s', animationFillMode: 'both' }}>
             <Sparkles className="w-3.5 h-3.5 text-primary" />
             India&apos;s #1 Gym Discovery Platform
           </div>
 
           {/* TITLE — word reveal with blur-in, shimmer on second line */}
-          <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-[7rem] font-extrabold text-foreground leading-[0.95] tracking-[-0.04em]">
+          <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-[7rem] font-extrabold text-foreground leading-[0.95] tracking-[-0.04em]">
             <WordReveal text="Find your" delay={200} />
             <br />
             <span className="apple-shimmer-text inline-block animate-fade-up" style={{ animationDelay: '0.6s', animationFillMode: 'both' }}>
@@ -277,12 +295,12 @@ export default function LandingPage() {
           </h1>
 
           {/* Sub */}
-          <p className="mt-8 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-light animate-fade-up" style={{ animationDelay: '0.9s', animationFillMode: 'both' }}>
+          <p className="mt-5 md:mt-8 text-base md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-light animate-fade-up" style={{ animationDelay: '0.9s', animationFillMode: 'both' }}>
             Discover, compare, and choose the best gyms in your city — with real pricing, verified reviews, and complete facility details.
           </p>
 
           {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-14 animate-fade-up" style={{ animationDelay: '1.1s', animationFillMode: 'both' }}>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mt-8 md:mt-14 animate-fade-up" style={{ animationDelay: '1.1s', animationFillMode: 'both' }}>
             <Link href="/gyms">
               <Button size="lg" className="h-14 px-12 text-base font-semibold rounded-2xl bg-primary text-primary-foreground transition-all duration-500 hover:shadow-[0_0_50px_var(--glow-primary)] hover:scale-[1.03] active:scale-[0.98]">
                 <Search className="w-4 h-4 mr-2" /> Browse Gyms
@@ -309,17 +327,17 @@ export default function LandingPage() {
       <Marquee />
 
       {/* ═══════════ STATS ═══════════ */}
-      <section className="py-28 relative border-b border-border/20">
-        <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-12">
-          <Stat value={200} suffix="+" label="Verified Gyms" d={0} />
-          <Stat value={25000} suffix="+" label="Active Members" d={100} />
-          <Stat value={15} suffix="" label="Indian Cities" d={200} />
-          <Stat value={96} suffix="%" label="Satisfaction" d={300} />
+      <section className="py-16 md:py-28 relative border-b border-border/20">
+        <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
+          <Stat value={realStats.gyms} suffix="" label="Verified Gyms" d={0} />
+          <Stat value={realStats.reviews} suffix="+" label="Total Reviews" d={100} />
+          <Stat value={realStats.cities} suffix="" label={realStats.cities === 1 ? 'City' : 'Cities'} d={200} />
+          <Stat value={realStats.avgRating} suffix="★" label="Avg Rating" d={300} />
         </div>
       </section>
 
       {/* ═══════════ FEATURES ═══════════ */}
-      <section className="py-36 max-w-7xl mx-auto px-6 flex flex-col gap-40">
+      <section className="py-16 md:py-36 max-w-7xl mx-auto px-6 flex flex-col gap-20 md:gap-40">
         <div ref={fhRef} className={`text-center transition-all duration-700 ${fhVis ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
           <p className="text-xs tracking-[0.3em] uppercase font-medium mb-5 text-primary">Features</p>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground tracking-tight leading-[1.1]">
@@ -333,9 +351,9 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════ FEATURED GYMS ═══════════ */}
-      <section className="py-36 border-y border-border/20 bg-[oklch(0.09_0.01_250)]">
+      <section className="py-16 md:py-36 border-y border-border/20 bg-[oklch(0.09_0.01_250)]">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-end justify-between mb-16">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 md:mb-16">
             <div>
               <p className="text-xs tracking-[0.3em] uppercase font-medium mb-3 text-primary">Top Picks</p>
               <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">Featured gyms in Jaipur</h2>
@@ -346,14 +364,14 @@ export default function LandingPage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {GYMS.map((gym, i) => <GymPreviewCard key={gym.name} {...gym} idx={i} />)}
+            {featuredGyms.map((gym, i) => <GymPreviewCard key={gym.name} {...gym} idx={i} />)}
           </div>
         </div>
       </section>
 
       {/* ═══════════ WHY FITRYX ═══════════ */}
-      <section className="py-36 max-w-7xl mx-auto px-6">
-        <div ref={whRef} className={`text-center mb-20 transition-all duration-700 ${whVis ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
+      <section className="py-16 md:py-36 max-w-7xl mx-auto px-6">
+        <div ref={whRef} className={`text-center mb-10 md:mb-20 transition-all duration-700 ${whVis ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
           <p className="text-xs tracking-[0.3em] uppercase font-medium mb-5 text-primary">Why Fitryx</p>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground tracking-tight max-w-3xl mx-auto leading-[1.1]">Built for people who take fitness seriously</h2>
         </div>
@@ -370,15 +388,15 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════ CTA — animated gradient border ═══════════ */}
-      <section className="py-36 px-6">
+      <section className="py-16 md:py-36 px-6">
         <div ref={ctaRef} className={`max-w-4xl mx-auto relative rounded-[2rem] p-[1px] transition-all duration-700 ${ctaVis ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'}`}>
           <div className="absolute inset-0 rounded-[2rem] opacity-50" style={{ background: 'linear-gradient(135deg, var(--primary), oklch(0.55 0.2 280), oklch(0.6 0.2 340), var(--primary))', backgroundSize: '300% 300%', animation: 'gradientShift 6s ease infinite' }} />
-          <div className="relative rounded-[calc(2rem-1px)] bg-background p-16 md:p-20 text-center overflow-hidden">
+          <div className="relative rounded-[calc(2rem-1px)] bg-background p-10 md:p-20 text-center overflow-hidden">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-48 rounded-full blur-[120px] opacity-10 bg-primary" />
             <div className="relative">
               <Trophy className="w-10 h-10 mx-auto mb-6 text-muted-foreground/20" />
               <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground tracking-tight mb-6 leading-[1.1]">Ready to find<br />your perfect gym?</h2>
-              <p className="text-muted-foreground mb-12 max-w-md mx-auto text-lg font-light">Join thousands of fitness enthusiasts making smarter gym decisions.</p>
+              <p className="text-muted-foreground mb-8 md:mb-12 max-w-md mx-auto text-base md:text-lg font-light">Join thousands of fitness enthusiasts making smarter gym decisions.</p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link href="/register"><Button size="lg" className="h-14 px-12 font-semibold rounded-2xl bg-primary text-primary-foreground transition-all duration-500 hover:shadow-[0_0_50px_var(--glow-primary)] hover:scale-[1.03]">Get started free</Button></Link>
                 <Link href="/gyms"><Button size="lg" variant="ghost" className="h-14 px-12 font-semibold rounded-2xl border border-border text-foreground hover:border-primary/40 hover:bg-primary/5 transition-all duration-300">Browse gyms</Button></Link>

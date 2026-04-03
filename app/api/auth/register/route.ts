@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   try {
     // Rate limit: 5 registrations per hour per IP
     const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
-    const { allowed } = rateLimit(`register:${ip}`, 5, 3600000)
+    const { allowed } = await rateLimit(`register:${ip}`, 5, 3600000)
     if (!allowed) {
       return NextResponse.json({ error: 'Too many registration attempts. Please try again later.' }, { status: 429 })
     }

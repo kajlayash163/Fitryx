@@ -20,7 +20,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!user || user.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     const { id } = await params
     const body = await req.json()
-    const { name, location, description, price_monthly, price_quarterly, price_yearly, facilities, images } = body
+    const { name, location, description, price_monthly, price_quarterly, price_yearly, facilities, images, gender_type, women_safety_rating, opening_hours, city, phone } = body
     const [gym] = await sql`
       UPDATE gyms SET
         name = ${name},
@@ -30,7 +30,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         price_quarterly = ${price_quarterly ?? 0},
         price_yearly = ${price_yearly ?? 0},
         facilities = ${facilities ?? []},
-        images = ${images ?? []}
+        images = ${images ?? []},
+        gender_type = ${gender_type ?? 'unisex'},
+        women_safety_rating = ${women_safety_rating ?? null},
+        opening_hours = ${opening_hours ?? '6:00 AM - 10:00 PM'},
+        city = ${city ?? 'Jaipur'},
+        phone = ${phone ?? null}
       WHERE id = ${id}
       RETURNING *
     `
