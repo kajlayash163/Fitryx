@@ -31,10 +31,10 @@ type Gym = {
 
 const ALL_FACILITIES = ['Pool', 'Sauna', 'Parking', 'Lockers', 'Yoga', 'Cardio', 'CrossFit', 'Personal Training', 'Boxing', 'Cycling']
 const SORT_OPTIONS = [
-  { label: 'Rating (High→Low)', value: 'rating_desc' },
-  { label: 'Price (Low→High)', value: 'price_asc' },
-  { label: 'Price (High→Low)', value: 'price_desc' },
-  { label: 'Name (A→Z)', value: 'name_asc' },
+  { label: 'Rating (High→Low)', short: 'Rating', value: 'rating_desc' },
+  { label: 'Price (Low→High)', short: 'Price ↑', value: 'price_asc' },
+  { label: 'Price (High→Low)', short: 'Price ↓', value: 'price_desc' },
+  { label: 'Name (A→Z)', short: 'A → Z', value: 'name_asc' },
 ]
 const GYMS_PER_PAGE = 9
 const PRICE_MIN = 500
@@ -374,7 +374,7 @@ export default function GymsPage() {
                           onClick={() => setSortBy(opt.value)}
                           className={`px-2 py-2 rounded-lg text-[11px] font-medium transition-all ${sortBy === opt.value ? 'bg-primary/15 text-primary shadow-sm border border-primary/20' : 'text-muted-foreground hover:text-foreground'}`}
                         >
-                          {opt.label.split(' ')[0]}
+                          {opt.short}
                         </button>
                       ))}
                     </div>
